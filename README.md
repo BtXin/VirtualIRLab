@@ -24,3 +24,4 @@
 - Implement A/B test module.
 - Testing functionalities.
 - Deploy the system on cloud.
+- Rewrite + Demo

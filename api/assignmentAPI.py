@@ -10,7 +10,7 @@ from schema.Assignment import Assignment
 
 parser = reqparse.RequestParser()
 parser.add_argument('instructor', type=str)
-parser.add_argument('annotator', type=str)
+parser.add_argument('class', type=str)
 parser.add_argument('dataset', type=str)
 parser.add_argument('query', type=str)
 parser.add_argument('ranker', type=str)
@@ -22,7 +22,6 @@ parser.add_argument('creator', type=str)
 
 class AssignmentAPI(Resource):
     @auth_required
-
     def get(self):
         name_dict = {}
         dataset = {}
@@ -40,22 +39,36 @@ class AssignmentAPI(Resource):
         ranker = args['ranker']
         params = args['params']
         dataset = args['dataset']
-        status = False
-        annotator = args['annotator']
+        class_ = args['class']
         instructor = args['instructor']
+
         instructor = User.objects(id=instructor)
-        annotator = User.objects(id=annotator)
-        query = Query.objects(id=query)
+        class_ = Class.objects(id=class_)
         dataset = DataSet.objects(id=dataset)
-        task = Assignment()
-        task.query = query[0]
-        task.ranker = ranker
-        task.params = str(params)
-        task.dataset = dataset[0]
-        task.status = status
-        task.annotator = annotator[0]
-        task.instructor = instructor[0]
-        task.save()
+
+        # serialize params
+        serialized_params = ""
+        for key in params:
+            value = params[key]
+            serialized_params += key + ":" + value + ","
+        serialized_params = serialized_params[:-1]
+
+        # add assignment to each student in class
+        annotators = User.objects(class_=class_)
+
+        for annotator in annotators:
+            assignment = Assignment()
+            assignment.query = query
+            assignment.instructor = instructor
+            assignment.annotator = annotator
+            assignment.ranker = ranker
+            assignment.params = params
+            assignment.dataset = dataset
+            assignment.status = False
+            assignment.view_status = False
+            assignment.save()
+
+            
         return make_response(jsonify("succeed"), 200, headers)
 
 
